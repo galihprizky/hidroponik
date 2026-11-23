@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f8f5">
+  <title>Hydroponic | Monitoring &amp; Kontrol</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Hydroponic dashboard">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 20v-6m0 1C6 15 4 11 4 5c6 0 8 3 8 7m0 2c0-5 2-8 8-8 0 6-2 9-8 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span><strong>hydroponic<span class="brand-dot">.</span></strong><small>MONITORING SYSTEM</small></span>
+      </a>
+      <div class="topbar-status"><span class="status-dot" id="api-dot"></span><span id="api-status">Menghubungkan API</span></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <div class="eyebrow hero-eyebrow"><span class="live-dot"></span> CONTROL CENTER <span class="eyebrow-divider">/</span> MONITORING</div>
+        <h1 id="page-title">Tumbuh lebih baik,<br><em>pantau lebih mudah.</em></h1>
+        <p>Pantau kondisi tanaman dan kelola pompa hidroponik Anda dalam satu tempat.</p>
+        <div class="hero-foot"><span class="hero-foot-dot"></span> Pemantauan sistem hidroponik</div>
+      </div>
+      <div class="device-panel">
+        <div class="device-panel-top"><span class="panel-kicker">PERANGKAT AKTIF</span><span class="signal-icon" aria-hidden="true">⌁</span></div>
+        <label for="device-select">Pilih perangkat</label>
+        <select id="device-select"><option value="hydro_tower_01">hydro_tower_01</option></select>
+        <div class="device-info">
+          <div><span class="device-info-label">STATUS PERANGKAT</span><span class="badge badge-neutral" id="device-status"><span class="status-dot"></span> MEMUAT</span></div>
+          <div><span class="device-info-label">TERAKHIR TERLIHAT</span><strong id="last-seen">-</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="sensor-title">
+      <div class="section-heading">
+        <div><div class="eyebrow section-eyebrow"><span class="section-index">01</span> LIVE MONITORING</div><h2 id="sensor-title">Kondisi lingkungan</h2><p>Data sensor terbaru dari perangkat Anda.</p></div>
+        <div class="polling-controls"><span class="polling-label"><span class="pulse-dot" id="poll-dot"></span><span id="poll-status">Pembaruan setiap 3 detik</span></span><button class="button button-outline" id="toggle-polling" type="button">Jeda</button></div>
+      </div>
+      <div class="sensor-grid">
+        <article class="sensor-card"><div class="sensor-top"><span class="sensor-icon icon-violet">pH</span><span class="sensor-number">01</span></div><div class="sensor-name">Tingkat pH</div><div class="sensor-value"><strong data-sensor="ph">-</strong><span>pH</span></div><div class="sensor-caption">Keasaman larutan</div></article>
+        <article class="sensor-card"><div class="sensor-top"><span class="sensor-icon icon-amber">mV</span><span class="sensor-number">02</span></div><div class="sensor-name">Tegangan pH</div><div class="sensor-value"><strong data-sensor="ph_mv">-</strong><span>mV</span></div><div class="sensor-caption">Pembacaan sensor pH</div></article>
+        <article class="sensor-card"><div class="sensor-top"><span class="sensor-icon icon-blue">◉</span><span class="sensor-number">03</span></div><div class="sensor-name">Nutrisi</div><div class="sensor-value"><strong data-sensor="ppm">-</strong><span>ppm</span></div><div class="sensor-caption">Konsentrasi larutan</div></article>
+        <article class="sensor-card"><div class="sensor-top"><span class="sensor-icon icon-green">EC</span><span class="sensor-number">04</span></div><div class="sensor-name">Konduktivitas</div><div class="sensor-value"><strong data-sensor="ec">-</strong><span>EC</span></div><div class="sensor-caption">Daya hantar listrik</div></article>
+        <article class="sensor-card"><div class="sensor-top"><span class="sensor-icon icon-coral">°</span><span class="sensor-number">05</span></div><div class="sensor-name">Suhu air</div><div class="sensor-value"><strong data-sensor="water_temp_c">-</strong><span>°C</span></div><div class="sensor-caption">Temperatur tandon</div></article>
+        <article class="sensor-card"><div class="sensor-top"><span class="sensor-icon icon-cyan">≋</span><span class="sensor-number">06</span></div><div class="sensor-name">Ketinggian air</div><div class="sensor-value"><strong data-sensor="water_level_cm">-</strong><span>cm</span></div><div class="sensor-caption">Level air tandon</div></article>
+        <article class="sensor-card"><div class="sensor-top"><span class="sensor-icon icon-slate">↕</span><span class="sensor-number">07</span></div><div class="sensor-name">Jarak sensor</div><div class="sensor-value"><strong data-sensor="distance_cm">-</strong><span>cm</span></div><div class="sensor-caption">Jarak permukaan air</div></article>
+        <article class="sensor-card update-card"><div class="update-card-icon">↻</div><div><div class="sensor-name">Data telemetri</div><div class="update-time" id="telemetry-time">Belum ada data</div><div class="sensor-caption">Waktu rekaman terakhir</div></div></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="pump-title">
+      <div class="section-heading pump-heading">
+        <div><div class="eyebrow section-eyebrow"><span class="section-index">02</span> MANUAL CONTROL</div><h2 id="pump-title">Kontrol pompa</h2><p>Kelola masing-masing pompa secara manual.</p></div>
+        <button class="button button-emergency" id="all-off" type="button"><span aria-hidden="true">⏻</span> Matikan Semua</button>
+      </div>
+      <div class="safety-note"><span class="safety-icon">!</span><p><strong>Perhatikan keamanan.</strong> Status pompa mengikuti telemetri terakhir. Respons terkirim bukan konfirmasi pompa berubah; durasi 0 atau kosong pada pompa air dapat berjalan tanpa batas otomatis.</p></div>
+      <div class="pump-grid" id="pump-grid"></div>
+      <div class="feedback" id="command-feedback" role="status" aria-live="polite">Belum ada perintah dikirim.</div>
+    </section>
+
+    <section class="section logs-section" aria-labelledby="logs-title">
+      <div class="section-heading logs-heading"><div><div class="eyebrow section-eyebrow"><span class="section-index">03</span> ACTIVITY LOG</div><h2 id="logs-title">Aktivitas terakhir</h2><p>10 catatan aksi relay terbaru.</p></div><span class="log-count">10 LOG TERAKHIR</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>WAKTU</th><th>POMPA</th><th>AKSI</th><th>SUMBER</th><th>KETERANGAN</th></tr></thead>
+          <tbody id="log-body"><tr><td class="table-empty" colspan="5">Menunggu data aktivitas...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div><span>hydroponic<span class="brand-dot">.</span></span><span>Monitoring &amp; kontrol sistem hidroponik</span></div><span>DIRANCANG UNTUK PERTUMBUHAN YANG LEBIH BAIK</span></footer>
+</body>
+</html>
