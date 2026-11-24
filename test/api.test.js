@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { runInNewContext } from 'node:vm';
 import { createApp } from '../src/app.js';
 
 async function setup(t) {
@@ -85,4 +87,56 @@ test('serves dashboard assets without intercepting API routes', async (t) => {
   const missing = await fetch(`${base}/api/missing`);
   assert.equal(missing.status, 404);
   assert.deepEqual(await missing.json(), { error: 'Not found' });
+});
+
+test('dashboard resolves assets and API requests within its deployment path', async () => {
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const script = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  const stylesheet = html.match(/<link[^>]+href="([^"]+)"/)[1];
+  const scriptPath = html.match(/<script[^>]+src="([^"]+)"/)[1];
+  const home = html.match(/<a class="brand" href="([^"]+)"/)[1];
+
+  for (const prefix of ['/', '/monitoring-tower/']) {
+    const page = `https://example.com${prefix}`;
+    assert.equal(new URL(stylesheet, page).pathname, `${prefix}styles.css`);
+    assert.equal(new URL(scriptPath, page).pathname, `${prefix}app.js`);
+    assert.equal(new URL(home, page).pathname, prefix);
+
+    const calls = [];
+    function element() {
+      return {
+        value: 'hydro_tower_01', options: [{ value: 'hydro_tower_01' }],
+        addEventListener() {}, setAttribute() {}, replaceChildren() {}, append() {},
+        querySelector() { return element(); },
+        querySelectorAll() { return [element(), element()]; },
+      };
+    }
+    const elements = new Map();
+    const document = {
+      querySelector(selector) {
+        if (!elements.has(selector)) elements.set(selector, element());
+        return elements.get(selector);
+      },
+      querySelectorAll() { return []; },
+      createElement: element,
+      createTextNode(text) { return text; },
+    };
+    const context = {
+      document, AbortController, setTimeout, clearTimeout,
+      setInterval() {}, clearInterval() {},
+      fetch: async (path, options = {}) => {
+        calls.push({ url: new URL(path, page), method: options.method ?? 'GET' });
+        return { ok: true, status: options.method === 'POST' ? 202 : 200, json: async () => [] };
+      },
+    };
+    runInNewContext(script, context);
+    await new Promise((resolve) => setImmediate(resolve));
+    await runInNewContext("sendCommand({ all_off: true }, {})", context);
+    assert.deepEqual(calls.slice(0, 4).map(({ url, method }) => [method, url.pathname + url.search]), [
+      ['GET', `${prefix}api/devices`],
+      ['GET', `${prefix}api/devices/hydro_tower_01/telemetry?limit=1`],
+      ['GET', `${prefix}api/devices/hydro_tower_01/relay-logs?limit=10`],
+      ['POST', `${prefix}api/devices/hydro_tower_01/cmd/relay`],
+    ]);
+  }
 });

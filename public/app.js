@@ -135,9 +135,9 @@ async function refresh() {
   const controller = new AbortController();
   request = controller;
   const timeout = setTimeout(() => controller.abort(), 8000);
-  const prefix = `/api/devices/${encodeURIComponent(id)}`;
+  const prefix = `./api/devices/${encodeURIComponent(id)}`;
   const results = await Promise.allSettled([
-    getList('/api/devices', controller.signal),
+    getList('./api/devices', controller.signal),
     getList(`${prefix}/telemetry?limit=1`, controller.signal),
     getList(`${prefix}/relay-logs?limit=10`, controller.signal),
   ]);
@@ -180,7 +180,7 @@ async function sendCommand(command, button) {
   button.disabled = true;
   showFeedback(`Mengirim perintah ke ${id}...`);
   try {
-    const response = await fetch(`/api/devices/${encodeURIComponent(id)}/cmd/relay`, {
+    const response = await fetch(`./api/devices/${encodeURIComponent(id)}/cmd/relay`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(command),

@@ -13,6 +13,23 @@ Backend Node.js 20+ dengan broker MQTT terintegrasi untuk telemetri dan kontrol 
 
 Buka `http://localhost:3030` (atau port `PORT` yang dikonfigurasi) setelah backend berjalan. Dashboard memilih `hydro_tower_01` secara default; perangkat lain yang terdaftar dapat dipilih. Data diperbarui setiap 3 detik dan dapat dijeda. Status dan sensor berasal dari telemetri terakhir, bukan konfirmasi langsung perangkat; jika data gagal dimuat atau belum tersedia, status ditampilkan sebagai tidak diketahui.
 
+Untuk reverse proxy di subpath, buka dashboard dengan garis miring di akhir, misalnya `https://example.com/monitoring-tower/`. Contoh lokasi Nginx berikut meneruskan aset dan API dengan menghapus prefix sebelum mencapai backend:
+
+```nginx
+location = /monitoring-tower {
+    return 308 /monitoring-tower/$is_args$args;
+}
+
+location /monitoring-tower/ {
+    proxy_pass http://127.0.0.1:3030/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```
+
+Garis miring terakhir pada `proxy_pass` diperlukan untuk menghapus prefix. Sesuaikan port dengan `PORT`; konfigurasi ini tidak menambahkan autentikasi, sehingga dashboard dan API tetap hanya boleh diakses melalui jaringan privat tepercaya.
+
 Kontrol pompa menggunakan API yang sama. Durasi default pompa dosing adalah 5000 ms; durasi pompa air kosong mengikuti default firmware, yang dapat berarti tanpa batas otomatis. Tombol `Matikan Semua` mengirim `all_off: true`. Respons `202` hanya menandakan perintah dipublikasikan, bukan jaminan pompa berubah; periksa telemetri dan log. Dashboard tidak menambahkan autentikasi: hanya gunakan pada jaringan privat tepercaya.
 
 Broker terintegrasi mendengarkan pada seluruh antarmuka IPv4 di port yang ditentukan oleh `MQTT_URL` (default 1883), sedangkan client internal terhubung melalui `127.0.0.1`. `MQTT_URL` hanya boleh berupa `mqtt://localhost:1883` atau `mqtt://127.0.0.1:1883`, dengan port yang dapat diubah. Pastikan port tersebut tidak digunakan proses lain.
