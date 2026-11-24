@@ -49,6 +49,7 @@ test('starts embedded broker, reports database unhealthy, and handles shutdown',
   child.send('shutdown');
   assert.equal(await exit, 0, output);
   assert.match(output, /Shutdown complete/);
+  assert.match(output, /Gagal memeriksa koneksi dan tabel/);
 });
 
 test('shuts down broker if HTTP port is already in use', { timeout: 10000 }, async (t) => {

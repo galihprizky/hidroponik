@@ -1,5 +1,6 @@
 import { config } from './config/index.js';
 import { pool } from './db/index.js';
+import { logDatabaseDiagnostics } from './db/diagnostics.js';
 import { createMqttClient } from './mqtt/client.js';
 import { createBroker } from './mqtt/broker.js';
 import { startIngest } from './mqtt/ingest.js';
@@ -15,6 +16,7 @@ const stopIngest = startIngest(mqttClient, pool);
 const server = createApp(pool, mqttClient).listen(config.port, () => {
   console.log(`[HTTP] Listening on port ${config.port}`);
 });
+void logDatabaseDiagnostics(pool);
 
 let stopping = false;
 async function shutdown(signal) {
