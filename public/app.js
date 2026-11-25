@@ -13,10 +13,6 @@ const lastSeen = document.querySelector('#last-seen');
 const telemetryTime = document.querySelector('#telemetry-time');
 const logBody = document.querySelector('#log-body');
 const telemetryLogBody = document.querySelector('#telemetry-log-body');
-const logTabs = [
-  { button: document.querySelector('#activity-tab'), panel: document.querySelector('#activity-panel') },
-  { button: document.querySelector('#telemetry-tab'), panel: document.querySelector('#telemetry-panel') },
-];
 const feedback = document.querySelector('#command-feedback');
 const apiStatus = document.querySelector('#api-status');
 const apiDot = document.querySelector('#api-dot');
@@ -149,16 +145,6 @@ function renderTelemetryLogs(logs) {
   telemetryLogBody.replaceChildren(...rows);
 }
 
-function selectLogTab(index, focus = false) {
-  logTabs.forEach(({ button, panel }, tabIndex) => {
-    const selected = tabIndex === index;
-    button.setAttribute('aria-selected', String(selected));
-    button.tabIndex = selected ? 0 : -1;
-    panel.hidden = !selected;
-  });
-  if (focus) logTabs[index].button.focus();
-}
-
 async function getList(path, signal) {
   const response = await fetch(path, { signal, cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -275,19 +261,6 @@ function createPumpCards() {
 }
 
 createPumpCards();
-logTabs.forEach(({ button }, index) => {
-  button.addEventListener('click', () => selectLogTab(index));
-  button.addEventListener('keydown', (event) => {
-    let next;
-    if (event.key === 'ArrowRight') next = (index + 1) % logTabs.length;
-    else if (event.key === 'ArrowLeft') next = (index + logTabs.length - 1) % logTabs.length;
-    else if (event.key === 'Home') next = 0;
-    else if (event.key === 'End') next = logTabs.length - 1;
-    else return;
-    event.preventDefault();
-    selectLogTab(next, true);
-  });
-});
 document.querySelector('#all-off').addEventListener('click', (event) => void sendCommand({ all_off: true }, event.currentTarget));
 togglePolling.addEventListener('click', () => {
   paused = !paused;

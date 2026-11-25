@@ -164,7 +164,10 @@ test('dashboard resolves assets and API requests within its deployment path', as
   }
 });
 
-test('dashboard tabs display telemetry for the selected device and handle empty or failed requests', async () => {
+test('dashboard displays telemetry for the selected device and handles empty or failed requests', async () => {
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.match(html, /<h3>Aktivitas terakhir<\/h3>[\s\S]*id="log-body"[\s\S]*<h3>Log telemetri<\/h3>[\s\S]*id="telemetry-log-body"/);
+  assert.doesNotMatch(html, /role="tab|<div class="log-group"[^>]*hidden/);
   const script = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
   const elements = new Map();
   function element() {
@@ -213,24 +216,10 @@ test('dashboard tabs display telemetry for the selected device and handle empty 
   };
   runInNewContext(script, context);
   await new Promise((resolve) => setImmediate(resolve));
-  const telemetryTab = elements.get('#telemetry-tab');
-  const activityTab = elements.get('#activity-tab');
-  const telemetryPanel = elements.get('#telemetry-panel');
-  const activityPanel = elements.get('#activity-panel');
   const body = elements.get('#telemetry-log-body');
 
-  telemetryTab.listeners.click();
-  assert.equal(telemetryTab.attributes['aria-selected'], 'true');
-  assert.equal(activityTab.attributes['aria-selected'], 'false');
-  assert.equal(telemetryPanel.hidden, false);
-  assert.equal(activityPanel.hidden, true);
   assert.deepEqual(body.children[0].children.map((cell) => cell.textContent),
     ['-', 'MANUAL', '10000', '6.5', '-', '-', '-', '-', '-', '0', '-', 'pump_a: ON, pump_b: OFF']);
-  let prevented = false;
-  telemetryTab.listeners.keydown({ key: 'ArrowLeft', preventDefault() { prevented = true; } });
-  assert.equal(prevented, true);
-  assert.equal(activityTab.attributes['aria-selected'], 'true');
-  assert.equal(activityTab.focused, true);
 
   selector.value = 'tower_2';
   selector.listeners.change();

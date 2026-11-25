@@ -69,11 +69,8 @@
 
     <section class="section logs-section" aria-labelledby="logs-title">
       <div class="section-heading logs-heading"><div><div class="eyebrow section-eyebrow"><span class="section-index">03</span> LOG DATA</div><h2 id="logs-title">Riwayat perangkat</h2><p>Aktivitas relay dan telemetri yang tersimpan.</p></div></div>
-      <div class="log-tabs" role="tablist" aria-label="Jenis riwayat perangkat">
-        <button class="log-tab" id="activity-tab" type="button" role="tab" aria-selected="true" aria-controls="activity-panel">Aktivitas terakhir</button>
-        <button class="log-tab" id="telemetry-tab" type="button" role="tab" aria-selected="false" aria-controls="telemetry-panel" tabindex="-1">Log telemetri</button>
-      </div>
-      <div id="activity-panel" role="tabpanel" aria-labelledby="activity-tab" tabindex="0">
+      <div class="log-group">
+        <h3>Aktivitas terakhir</h3>
         <p class="log-count">10 catatan aksi relay terbaru</p>
         <div class="table-wrap">
           <table>
@@ -82,7 +79,8 @@
           </table>
         </div>
       </div>
-      <div id="telemetry-panel" role="tabpanel" aria-labelledby="telemetry-tab" tabindex="0" hidden>
+      <div class="log-group">
+        <h3>Log telemetri</h3>
         <p class="log-count">100 catatan telemetri terbaru</p>
         <div class="table-wrap">
           <table>

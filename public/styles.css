@@ -109,11 +109,9 @@ h2 { color: #1c3c2b; margin: 8px 0 5px; font-size: 22px; letter-spacing: -.7px; 
 .feedback { margin-top: 11px; color: #93a398; font-size: 11px; line-height: 1.5; min-height: 17px; }
 .feedback.success { color: #2c8051; }.feedback.error { color: #b74f49; }
 .logs-section { margin-top: 35px; }
-.log-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); }
-.log-tab { padding: 11px 15px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #829287; font-size: 12px; font-weight: 700; }
-.log-tab:hover { color: var(--green); }
-.log-tab[aria-selected="true"] { border-bottom-color: var(--green); color: var(--green); }
-.log-count { margin: 14px 0 10px; color: #899a8d; font-size: 11px; }
+.log-group + .log-group { margin-top: 24px; }
+.log-group h3 { margin: 0; color: #294536; font-size: 14px; }
+.log-count { margin: 7px 0 10px; color: #899a8d; font-size: 11px; }
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
 table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
 th { padding: 14px 18px; border-bottom: 1px solid #edf2ed; color: #9eada1; font-size: 9px; letter-spacing: .8px; font-weight: 750; white-space: nowrap; }

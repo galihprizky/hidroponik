@@ -13,7 +13,7 @@ Backend Node.js 20+ dengan broker MQTT terintegrasi untuk telemetri dan kontrol 
 
 Buka `http://localhost:3030` (atau port `PORT` yang dikonfigurasi) setelah backend berjalan. Dashboard memilih `hydro_tower_01` secara default; perangkat lain yang terdaftar dapat dipilih. Data diperbarui setiap 3 detik dan dapat dijeda. Status dan sensor berasal dari telemetri terakhir, bukan konfirmasi langsung perangkat; jika data gagal dimuat atau belum tersedia, status ditampilkan sebagai tidak diketahui.
 
-Pada bagian riwayat perangkat, tab **Aktivitas terakhir** menampilkan 10 log relay terbaru dan tab **Log telemetri** menampilkan 100 catatan telemetri terbaru dari database untuk perangkat yang dipilih. Tabel mengikuti pengaturan pembaruan dashboard; geser horizontal untuk melihat semua kolom pada layar sempit.
+Pada bagian riwayat perangkat, tabel **Aktivitas terakhir** menampilkan 10 log relay terbaru dan tabel **Log telemetri** menampilkan 100 catatan telemetri terbaru dari database untuk perangkat yang dipilih. Tabel mengikuti pengaturan pembaruan dashboard; geser horizontal untuk melihat semua kolom pada layar sempit.
 
 Saat backend dimulai, log `[PostgreSQL] Diagnostics` menunjukkan database, pengguna, search path, alamat dan port server PostgreSQL, serta apakah `telemetry_logs` ditemukan pada search path dan schema `public`. URL koneksi dan password tidak dicetak. Untuk PM2, lihat dengan `pm2 logs <nama-atau-id>`. Jika pemeriksaan gagal, error ditampilkan di log; aplikasi tetap berjalan dan `/health` melaporkan status koneksi.
 
