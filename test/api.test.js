@@ -103,9 +103,19 @@ test('serves dashboard assets without intercepting API routes', async (t) => {
   const index = await fetch(`${base}/`);
   assert.equal(index.status, 200);
   assert.match(index.headers.get('content-type'), /text\/html/);
-  assert.match(await index.text(), /Kontrol pompa/);
-  for (const asset of ['styles.css', 'app.js']) {
-    assert.equal((await fetch(`${base}/${asset}`)).status, 200);
+  assert.equal(index.headers.get('cache-control'), 'no-cache');
+  const html = await index.text();
+  assert.match(html, /Kontrol pompa/);
+  const assets = [
+    html.match(/<link[^>]+href="([^"]+)"/)[1],
+    html.match(/<script[^>]+src="([^"]+)"/)[1],
+  ];
+  for (const asset of assets) {
+    const url = new URL(asset, `${base}/`);
+    assert.ok(url.searchParams.get('v'));
+    const response = await fetch(url);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-cache');
   }
   const missing = await fetch(`${base}/api/missing`);
   assert.equal(missing.status, 404);

@@ -10,7 +10,11 @@ export function createApp(pool, mqttClient) {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '32kb' }));
   app.use(createRoutes(pool, mqttClient));
-  app.use(express.static(publicDir));
+  app.use(express.static(publicDir, {
+    setHeaders(res) {
+      res.setHeader('Cache-Control', 'no-cache');
+    },
+  }));
   app.use((req, res) => res.status(404).json({ error: 'Not found' }));
   app.use((error, req, res, next) => {
     if (error instanceof InputError) return res.status(400).json({ error: error.message });

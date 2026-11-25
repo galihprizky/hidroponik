@@ -15,6 +15,8 @@ Buka `http://localhost:3030` (atau port `PORT` yang dikonfigurasi) setelah backe
 
 Pada bagian riwayat perangkat, tabel **Aktivitas terakhir** menampilkan 10 log relay terbaru dan tabel **Log telemetri** menampilkan 100 catatan telemetri terbaru dari database untuk perangkat yang dipilih. Tabel mengikuti pengaturan pembaruan dashboard; geser horizontal untuk melihat semua kolom pada layar sempit.
 
+File dashboard dikirim dengan `Cache-Control: no-cache` agar browser memeriksa versi terbaru. Saat mengubah JavaScript atau CSS, perbarui parameter `v` pada referensi aset di `public/index.html`; pastikan reverse proxy tidak mengabaikan query string atau menimpa kebijakan cache.
+
 Saat backend dimulai, log `[PostgreSQL] Diagnostics` menunjukkan database, pengguna, search path, alamat dan port server PostgreSQL, serta apakah `telemetry_logs` ditemukan pada search path dan schema `public`. URL koneksi dan password tidak dicetak. Untuk PM2, lihat dengan `pm2 logs <nama-atau-id>`. Jika pemeriksaan gagal, error ditampilkan di log; aplikasi tetap berjalan dan `/health` melaporkan status koneksi.
 
 Untuk reverse proxy di subpath, buka dashboard dengan garis miring di akhir, misalnya `https://example.com/monitoring-tower/`. Contoh lokasi Nginx berikut meneruskan aset dan API dengan menghapus prefix sebelum mencapai backend:
