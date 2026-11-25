@@ -12,6 +12,11 @@ const deviceStatus = document.querySelector('#device-status');
 const lastSeen = document.querySelector('#last-seen');
 const telemetryTime = document.querySelector('#telemetry-time');
 const logBody = document.querySelector('#log-body');
+const telemetryLogBody = document.querySelector('#telemetry-log-body');
+const logTabs = [
+  { button: document.querySelector('#activity-tab'), panel: document.querySelector('#activity-panel') },
+  { button: document.querySelector('#telemetry-tab'), panel: document.querySelector('#telemetry-panel') },
+];
 const feedback = document.querySelector('#command-feedback');
 const apiStatus = document.querySelector('#api-status');
 const apiDot = document.querySelector('#api-dot');
@@ -88,18 +93,18 @@ function renderTelemetry(telemetry) {
   }
 }
 
-function emptyLogs(message) {
+function emptyTable(body, columns, message) {
   const row = document.createElement('tr');
   const cell = document.createElement('td');
-  cell.colSpan = 5;
+  cell.colSpan = columns;
   cell.className = 'table-empty';
   cell.textContent = message;
   row.append(cell);
-  logBody.replaceChildren(row);
+  body.replaceChildren(row);
 }
 
 function renderLogs(logs) {
-  if (!logs.length) return emptyLogs('Belum ada aktivitas relay.');
+  if (!logs.length) return emptyTable(logBody, 5, 'Belum ada aktivitas relay.');
   const rows = logs.slice(0, 10).map((log) => {
     const row = document.createElement('tr');
     const values = [formatTime(log.recorded_at), log.pump ?? '-', log.action ?? '-', log.source ?? '-', log.reason || '-'];
@@ -120,6 +125,40 @@ function renderLogs(logs) {
   logBody.replaceChildren(...rows);
 }
 
+function renderTelemetryLogs(logs) {
+  if (!logs.length) return emptyTable(telemetryLogBody, 12, 'Belum ada data telemetri.');
+  const rows = logs.slice(0, 100).map((log) => {
+    const row = document.createElement('tr');
+    const relays = pumps
+      .filter((pump) => typeof log.relays?.[pump.key] === 'boolean')
+      .map((pump) => `${pump.key}: ${log.relays[pump.key] ? 'ON' : 'OFF'}`)
+      .join(', ');
+    const values = [
+      formatTime(log.recorded_at), log.mode ?? '-', formatSensor(log.uptime_ms),
+      ...['ph', 'ph_mv', 'ppm', 'ec', 'ec_mv', 'water_temp_c', 'water_level_cm', 'distance_cm']
+        .map((field) => formatSensor(log[field])),
+      relays || '-',
+    ];
+    for (const value of values) {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      row.append(cell);
+    }
+    return row;
+  });
+  telemetryLogBody.replaceChildren(...rows);
+}
+
+function selectLogTab(index, focus = false) {
+  logTabs.forEach(({ button, panel }, tabIndex) => {
+    const selected = tabIndex === index;
+    button.setAttribute('aria-selected', String(selected));
+    button.tabIndex = selected ? 0 : -1;
+    panel.hidden = !selected;
+  });
+  if (focus) logTabs[index].button.focus();
+}
+
 async function getList(path, signal) {
   const response = await fetch(path, { signal, cache: 'no-store' });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -138,7 +177,7 @@ async function refresh() {
   const prefix = `./api/devices/${encodeURIComponent(id)}`;
   const results = await Promise.allSettled([
     getList('./api/devices', controller.signal),
-    getList(`${prefix}/telemetry?limit=1`, controller.signal),
+    getList(`${prefix}/telemetry?limit=100`, controller.signal),
     getList(`${prefix}/relay-logs?limit=10`, controller.signal),
   ]);
   clearTimeout(timeout);
@@ -147,10 +186,16 @@ async function refresh() {
   const [devices, telemetry, logs] = results;
   if (devices.status === 'fulfilled') renderDevices(devices.value, id);
   else { setDeviceStatus('neutral'); lastSeen.textContent = '-'; }
-  if (telemetry.status === 'fulfilled') renderTelemetry(telemetry.value[0] ?? null);
-  else { renderTelemetry(null); telemetryTime.textContent = 'Gagal memuat data'; }
+  if (telemetry.status === 'fulfilled') {
+    renderTelemetry(telemetry.value[0] ?? null);
+    renderTelemetryLogs(telemetry.value);
+  } else {
+    renderTelemetry(null);
+    telemetryTime.textContent = 'Gagal memuat data';
+    emptyTable(telemetryLogBody, 12, 'Gagal memuat data telemetri.');
+  }
   if (logs.status === 'fulfilled') renderLogs(logs.value);
-  else emptyLogs('Gagal memuat aktivitas relay.');
+  else emptyTable(logBody, 5, 'Gagal memuat aktivitas relay.');
   const failures = results.filter((result) => result.status === 'rejected').length;
   if (!failures) setApiStatus('online', 'API terhubung');
   else if (failures === results.length) setApiStatus('offline', 'API tidak tersedia');
@@ -230,6 +275,19 @@ function createPumpCards() {
 }
 
 createPumpCards();
+logTabs.forEach(({ button }, index) => {
+  button.addEventListener('click', () => selectLogTab(index));
+  button.addEventListener('keydown', (event) => {
+    let next;
+    if (event.key === 'ArrowRight') next = (index + 1) % logTabs.length;
+    else if (event.key === 'ArrowLeft') next = (index + logTabs.length - 1) % logTabs.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = logTabs.length - 1;
+    else return;
+    event.preventDefault();
+    selectLogTab(next, true);
+  });
+});
 document.querySelector('#all-off').addEventListener('click', (event) => void sendCommand({ all_off: true }, event.currentTarget));
 togglePolling.addEventListener('click', () => {
   paused = !paused;
@@ -242,7 +300,8 @@ deviceSelect.addEventListener('change', () => {
   setDeviceStatus('neutral');
   lastSeen.textContent = '-';
   renderTelemetry(null);
-  emptyLogs('Menunggu data aktivitas...');
+  emptyTable(logBody, 5, 'Menunggu data aktivitas...');
+  emptyTable(telemetryLogBody, 12, 'Menunggu data telemetri...');
   showFeedback('Belum ada perintah dikirim.');
   void refresh();
 });

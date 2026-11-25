@@ -68,12 +68,28 @@
     </section>
 
     <section class="section logs-section" aria-labelledby="logs-title">
-      <div class="section-heading logs-heading"><div><div class="eyebrow section-eyebrow"><span class="section-index">03</span> ACTIVITY LOG</div><h2 id="logs-title">Aktivitas terakhir</h2><p>10 catatan aksi relay terbaru.</p></div><span class="log-count">10 LOG TERAKHIR</span></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>WAKTU</th><th>POMPA</th><th>AKSI</th><th>SUMBER</th><th>KETERANGAN</th></tr></thead>
-          <tbody id="log-body"><tr><td class="table-empty" colspan="5">Menunggu data aktivitas...</td></tr></tbody>
-        </table>
+      <div class="section-heading logs-heading"><div><div class="eyebrow section-eyebrow"><span class="section-index">03</span> LOG DATA</div><h2 id="logs-title">Riwayat perangkat</h2><p>Aktivitas relay dan telemetri yang tersimpan.</p></div></div>
+      <div class="log-tabs" role="tablist" aria-label="Jenis riwayat perangkat">
+        <button class="log-tab" id="activity-tab" type="button" role="tab" aria-selected="true" aria-controls="activity-panel">Aktivitas terakhir</button>
+        <button class="log-tab" id="telemetry-tab" type="button" role="tab" aria-selected="false" aria-controls="telemetry-panel" tabindex="-1">Log telemetri</button>
+      </div>
+      <div id="activity-panel" role="tabpanel" aria-labelledby="activity-tab" tabindex="0">
+        <p class="log-count">10 catatan aksi relay terbaru</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>WAKTU</th><th>POMPA</th><th>AKSI</th><th>SUMBER</th><th>KETERANGAN</th></tr></thead>
+            <tbody id="log-body"><tr><td class="table-empty" colspan="5">Menunggu data aktivitas...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="telemetry-panel" role="tabpanel" aria-labelledby="telemetry-tab" tabindex="0" hidden>
+        <p class="log-count">100 catatan telemetri terbaru</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>WAKTU</th><th>MODE</th><th>UPTIME (ms)</th><th>pH</th><th>pH (mV)</th><th>PPM</th><th>EC</th><th>EC (mV)</th><th>SUHU AIR (°C)</th><th>LEVEL AIR (cm)</th><th>JARAK (cm)</th><th>RELAY</th></tr></thead>
+            <tbody id="telemetry-log-body"><tr><td class="table-empty" colspan="12">Menunggu data telemetri...</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>

@@ -157,9 +157,89 @@ test('dashboard resolves assets and API requests within its deployment path', as
     await runInNewContext("sendCommand({ all_off: true }, {})", context);
     assert.deepEqual(calls.slice(0, 4).map(({ url, method }) => [method, url.pathname + url.search]), [
       ['GET', `${prefix}api/devices`],
-      ['GET', `${prefix}api/devices/hydro_tower_01/telemetry?limit=1`],
+      ['GET', `${prefix}api/devices/hydro_tower_01/telemetry?limit=100`],
       ['GET', `${prefix}api/devices/hydro_tower_01/relay-logs?limit=10`],
       ['POST', `${prefix}api/devices/hydro_tower_01/cmd/relay`],
     ]);
   }
+});
+
+test('dashboard tabs display telemetry for the selected device and handle empty or failed requests', async () => {
+  const script = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  const elements = new Map();
+  function element() {
+    return {
+      value: '', options: [], children: [], attributes: {}, listeners: {},
+      addEventListener(type, handler) { this.listeners[type] = handler; },
+      setAttribute(name, value) { this.attributes[name] = value; },
+      replaceChildren(...children) { this.children = children; },
+      append(...children) { this.children.push(...children); },
+      focus() { this.focused = true; },
+      querySelector() { return element(); },
+      querySelectorAll() { return [element(), element()]; },
+    };
+  }
+  const document = {
+    querySelector(selector) {
+      if (!elements.has(selector)) elements.set(selector, element());
+      return elements.get(selector);
+    },
+    querySelectorAll() { return []; },
+    createElement: element,
+    createTextNode(text) { return text; },
+  };
+  const selector = document.querySelector('#device-select');
+  selector.value = 'tower_1';
+  selector.options = [{ value: 'tower_1' }];
+  let failTelemetry = false;
+  const calls = [];
+  const context = {
+    document, AbortController, setTimeout, clearTimeout,
+    setInterval() {}, clearInterval() {},
+    Option: function (label, value) { this.value = value; },
+    fetch: async (path) => {
+      calls.push(path);
+      if (path === './api/devices') return { ok: true, json: async () => [{ device_id: 'tower_1' }, { device_id: 'tower_2' }] };
+      if (path.includes('/telemetry?')) {
+        if (failTelemetry) return { ok: false, status: 500 };
+        const rows = path.includes('tower_1') ? [{
+          mode: 'MANUAL', uptime_ms: '10000', ph: '6.5', water_temp_c: null,
+          water_level_cm: 0, relays: { pump_a: true, pump_b: false },
+        }] : [];
+        return { ok: true, json: async () => rows };
+      }
+      return { ok: true, json: async () => [] };
+    },
+  };
+  runInNewContext(script, context);
+  await new Promise((resolve) => setImmediate(resolve));
+  const telemetryTab = elements.get('#telemetry-tab');
+  const activityTab = elements.get('#activity-tab');
+  const telemetryPanel = elements.get('#telemetry-panel');
+  const activityPanel = elements.get('#activity-panel');
+  const body = elements.get('#telemetry-log-body');
+
+  telemetryTab.listeners.click();
+  assert.equal(telemetryTab.attributes['aria-selected'], 'true');
+  assert.equal(activityTab.attributes['aria-selected'], 'false');
+  assert.equal(telemetryPanel.hidden, false);
+  assert.equal(activityPanel.hidden, true);
+  assert.deepEqual(body.children[0].children.map((cell) => cell.textContent),
+    ['-', 'MANUAL', '10000', '6.5', '-', '-', '-', '-', '-', '0', '-', 'pump_a: ON, pump_b: OFF']);
+  let prevented = false;
+  telemetryTab.listeners.keydown({ key: 'ArrowLeft', preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(activityTab.attributes['aria-selected'], 'true');
+  assert.equal(activityTab.focused, true);
+
+  selector.value = 'tower_2';
+  selector.listeners.change();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(calls.includes('./api/devices/tower_2/telemetry?limit=100'));
+  assert.equal(body.children[0].children[0].textContent, 'Belum ada data telemetri.');
+  assert.equal(body.children[0].children[0].colSpan, 12);
+
+  failTelemetry = true;
+  await runInNewContext('refresh()', context);
+  assert.equal(body.children[0].children[0].textContent, 'Gagal memuat data telemetri.');
 });
