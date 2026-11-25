@@ -91,8 +91,8 @@ async function event(pool, deviceId, payload) {
   const result = await pool.query(
     `INSERT INTO relay_state_logs
      (device_id, mode, channel, pump, action, is_active, source, reason, duration_ms, ph_ref, ppm_ref, water_temp_ref, water_level_ref, recorded_at)
-     SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
-     WHERE EXISTS (SELECT 1 FROM devices WHERE device_id = $1)`,
+     SELECT $1::text, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
+     WHERE EXISTS (SELECT 1 FROM devices WHERE device_id = $1::text)`,
     [deviceId, mode(data), data.channel, data.pump, data.action, isActive,
       optionalText(data.source, 'source'), optionalText(data.reason, 'reason'), duration,
       sensor(reference('ph'), 'ph_ref'),

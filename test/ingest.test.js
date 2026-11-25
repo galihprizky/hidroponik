@@ -51,6 +51,8 @@ test('relay event maps references by action, including firmware water alias', as
   await ingest(pool, 'hydroponic/tower_1/event', message({ ...data, action: 'ON', duration_ms: 123 }));
   await ingest(pool, 'hydroponic/tower_1/event', message({ ...data, action: 'OFF', duration_ms: 456 }));
   await ingest(pool, 'hydroponic/tower_1/event', message({ ...data, action: 'BLOCKED', reason: 'WATER_TOO_LOW' }));
+  assert.match(pool.calls[0].text, /SELECT \$1::text,/);
+  assert.match(pool.calls[0].text, /WHERE device_id = \$1::text/);
   assert.deepEqual(pool.calls[0].values.slice(9), [6, 500, 24, 30]);
   assert.deepEqual(pool.calls[1].values.slice(9), [7, 600, 25, 35]);
   assert.equal(pool.calls[0].values[5], true);
