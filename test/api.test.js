@@ -64,6 +64,29 @@ test('publishes valid commands and rejects ambiguous and malformed commands', as
   assert.equal(publications.length, 2);
 });
 
+test('preserves relay durations as numbers without adding a default', async (t) => {
+  const { base, publications } = await setup(t);
+  const post = (body) => fetch(`${base}/api/devices/hydro_tower_01/cmd/relay`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+  for (const duration of [5000, '10000', 0, '4294967295']) {
+    assert.equal((await post({ pump: 'pump_a', state: true, duration_ms: duration })).status, 202);
+  }
+  assert.equal((await post({ pump: 'pump_water', state: true })).status, 202);
+  assert.deepEqual(publications.map(({ topic, payload }) => [topic, payload.duration_ms]), [
+    ['hydroponic/hydro_tower_01/cmd/relay', 5000],
+    ['hydroponic/hydro_tower_01/cmd/relay', 10000],
+    ['hydroponic/hydro_tower_01/cmd/relay', 0],
+    ['hydroponic/hydro_tower_01/cmd/relay', 4294967295],
+    ['hydroponic/hydro_tower_01/cmd/relay', undefined],
+  ]);
+  for (const duration of [null, '', '  ', 'NaN', 'Infinity', true, [], -1, 1.5, 4294967296]) {
+    assert.equal((await post({ pump: 'pump_a', state: true, duration_ms: duration })).status, 400);
+  }
+  assert.equal((await post({ pump: 'pump_a', state: false, duration_ms: 5000 })).status, 400);
+  assert.equal(publications.length, 5);
+});
+
 test('health reports MQTT disconnection', async (t) => {
   const { base, mqtt, pool } = await setup(t);
   assert.equal((await fetch(`${base}/health`)).status, 200);

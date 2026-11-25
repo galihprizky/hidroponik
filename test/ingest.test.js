@@ -43,6 +43,23 @@ test('telemetry preserves zero readings and normalizes missing and invalid tempe
   assert.equal(inserts[2].values[8], null);
 });
 
+test('normalizes missing and NaN telemetry fields and uses explicit database types', async () => {
+  const pool = fakePool();
+  await ingest(pool, 'hydroponic/tower_1/telemetry', message({
+    mode: 'MANUAL', uptime_ms: 'NaN', water_temp_c: 'NaN', relays: {},
+  }));
+  const insert = pool.calls[2];
+  assert.equal(insert.values[2], null);
+  assert.deepEqual(insert.values.slice(3, 11), Array(8).fill(null));
+  assert.match(insert.text, /\$3::bigint/);
+  assert.match(insert.text, /\$9::numeric/);
+  await ingest(pool, 'hydroponic/tower_1/telemetry', message({
+    mode: 'MANUAL', uptime_ms: 4294967295, water_temp_c: 0, relays: {},
+  }));
+  assert.equal(pool.calls[6].values[2], 4294967295);
+  assert.equal(pool.calls[6].values[8], 0);
+});
+
 test('relay event maps references by action, including firmware water alias', async () => {
   const pool = fakePool();
   const data = { mode: 'MANUAL', channel: 1, pump: 'pump_a', ph_before: 6, ph_after: 7,
@@ -71,6 +88,20 @@ test('blocked event accepts after references if before references are absent', a
     ph_after: 7, ppm_after: 600, water_temp_after: 25, water_after: 35,
   }));
   assert.deepEqual(pool.calls[0].values.slice(9), [7, 600, 25, 35]);
+});
+
+test('normalizes NaN and missing event fields while preserving large durations', async () => {
+  const pool = fakePool();
+  const base = { mode: 'MANUAL', channel: 1, pump: 'pump_a' };
+  await ingest(pool, 'hydroponic/tower_1/event', message({ ...base, action: 'ON', duration_ms: 5000, water_temp_before: 'NaN' }));
+  await ingest(pool, 'hydroponic/tower_1/event', message({ ...base, action: 'OFF', duration_ms: 'NaN' }));
+  await ingest(pool, 'hydroponic/tower_1/event', message({ ...base, action: 'OFF', duration_ms: 4294967295 }));
+  assert.deepEqual(pool.calls[0].values.slice(6), [null, null, null, null, null, null, null]);
+  assert.equal(pool.calls[1].values[8], null);
+  assert.equal(pool.calls[2].values[8], 4294967295);
+  assert.match(pool.calls[0].text, /\$6::boolean/);
+  assert.match(pool.calls[0].text, /\$9::bigint/);
+  assert.match(pool.calls[0].text, /\$12::numeric/);
 });
 
 test('rejects invalid JSON, mismatched device and relay, and unknown status', async () => {

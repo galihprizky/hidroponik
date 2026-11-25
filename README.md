@@ -69,7 +69,7 @@ Contoh body perintah:
 {"all_off":true}
 ```
 
-Gunakan tepat satu dari `pump` atau `channel` (1–5); `state` boolean wajib. `duration_ms` opsional untuk `state: true`, berupa integer 0–4294967295. Firmware menentukan durasi default jika tidak disediakan; `0` dapat berarti tanpa batas otomatis. Respons `202` hanya berarti pesan QoS 0 dikirim ke client MQTT, **bukan** konfirmasi perangkat menerima atau menjalankan perintah. Periksa event dan status perangkat untuk mengetahui hasilnya.
+Gunakan tepat satu dari `pump` atau `channel` (1–5); `state` boolean wajib. `duration_ms` opsional untuk `state: true`, berupa integer 0–4294967295 atau string angka yang dapat dikonversi menjadi integer dalam rentang tersebut. Nilainya diterbitkan sebagai angka tanpa perubahan; `null` dan string kosong ditolak. Firmware menentukan durasi default jika tidak disediakan; `0` dapat berarti tanpa batas otomatis. Backend tidak menjadwalkan perintah OFF setelah ON. Respons `202` hanya berarti pesan QoS 0 dikirim ke client MQTT, **bukan** konfirmasi perangkat menerima atau menjalankan perintah. Periksa event dan status perangkat untuk mengetahui hasilnya.
 
 ## Ingest dan keamanan
 

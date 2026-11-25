@@ -1,4 +1,4 @@
-import { actions, deviceIdPattern, InputError, object, optionalText, pumps, relayIdentity, sensor, unsignedInteger } from '../validation.js';
+import { actions, deviceIdPattern, InputError, object, optionalText, optionalUnsignedInteger, pumps, relayIdentity, sensor } from '../validation.js';
 
 function parseJson(payload) {
   try {
@@ -51,7 +51,7 @@ async function telemetry(pool, deviceId, payload) {
     if ((field === 'water_level_cm' || field === 'distance_cm') && value !== null && value < 0) return null;
     return value;
   });
-  const uptime = data.uptime_ms == null ? null : unsignedInteger(data.uptime_ms, 'uptime_ms');
+  const uptime = optionalUnsignedInteger(data.uptime_ms, 'uptime_ms');
   const deviceMode = mode(data);
   const client = await pool.connect();
   try {
@@ -60,7 +60,8 @@ async function telemetry(pool, deviceId, payload) {
     await client.query(
       `INSERT INTO telemetry_logs
        (device_id, mode, uptime_ms, ph, ph_mv, ppm, ec, ec_mv, water_temp_c, water_level_cm, distance_cm, relays, recorded_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, NOW())`,
+       VALUES ($1::text, $2::text, $3::bigint, $4::numeric, $5::numeric, $6::numeric,
+               $7::numeric, $8::numeric, $9::numeric, $10::numeric, $11::numeric, $12::jsonb, NOW())`,
       [deviceId, deviceMode, uptime, ...values, JSON.stringify(relays)],
     );
     await client.query('COMMIT');
@@ -80,8 +81,7 @@ async function event(pool, deviceId, payload) {
   relayIdentity(data.channel, data.pump);
   if (!actions.includes(data.action)) throw new InputError('Invalid relay action');
   const suffix = data.action === 'OFF' ? 'after' : 'before';
-  const duration = data.action === 'OFF' && data.duration_ms != null
-    ? unsignedInteger(data.duration_ms, 'duration_ms') : null;
+  const duration = data.action === 'OFF' ? optionalUnsignedInteger(data.duration_ms, 'duration_ms') : null;
   const isActive = data.action === 'ON';
   const reference = (field) => {
     if (data.action === 'BLOCKED') return data[`${field}_before`] ?? data[`${field}_after`];
@@ -91,7 +91,8 @@ async function event(pool, deviceId, payload) {
   const result = await pool.query(
     `INSERT INTO relay_state_logs
      (device_id, mode, channel, pump, action, is_active, source, reason, duration_ms, ph_ref, ppm_ref, water_temp_ref, water_level_ref, recorded_at)
-     SELECT $1::text, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
+     SELECT $1::text, $2::text, $3::integer, $4::text, $5::text, $6::boolean,
+            $7::text, $8::text, $9::bigint, $10::numeric, $11::numeric, $12::numeric, $13::numeric, NOW()
      WHERE EXISTS (SELECT 1 FROM devices WHERE device_id = $1::text)`,
     [deviceId, mode(data), data.channel, data.pump, data.action, isActive,
       optionalText(data.source, 'source'), optionalText(data.reason, 'reason'), duration,

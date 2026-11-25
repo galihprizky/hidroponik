@@ -37,6 +37,11 @@ export function unsignedInteger(value, name) {
   return value;
 }
 
+export function optionalUnsignedInteger(value, name) {
+  if (value == null || value === 'NaN' || (typeof value === 'number' && !Number.isFinite(value))) return null;
+  return unsignedInteger(value, name);
+}
+
 export function relayIdentity(channel, pump) {
   if (!Number.isInteger(channel) || channel < 1 || channel > pumps.length || pumps[channel - 1] !== pump) {
     throw new InputError('channel and pump must identify the same relay');
@@ -61,8 +66,12 @@ export function command(body) {
   }
   if (typeof body.state !== 'boolean') throw new InputError('state must be a boolean');
   if ('duration_ms' in body) {
-    unsignedInteger(body.duration_ms, 'duration_ms');
     if (!body.state) throw new InputError('duration_ms is only valid when state is true');
+    if ((typeof body.duration_ms !== 'number' && typeof body.duration_ms !== 'string')
+      || (typeof body.duration_ms === 'string' && !body.duration_ms.trim())) {
+      throw new InputError('duration_ms must be an integer between 0 and 4294967295');
+    }
+    return { ...body, duration_ms: unsignedInteger(Number(body.duration_ms), 'duration_ms') };
   }
   return body;
 }
